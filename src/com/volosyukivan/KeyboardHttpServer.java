@@ -25,7 +25,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 
-import android.os.Handler;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -33,9 +32,8 @@ public final class KeyboardHttpServer extends HttpServer {
   private HttpService service;
   static final int FOCUS = 1024;
   private int seqNum = 0;
-  ArrayList<KeyboardHttpConnection> waitingConnections =
-    new ArrayList<KeyboardHttpConnection>();
-  
+  ArrayList<KeyboardHttpConnection> waitingConnections = new ArrayList<KeyboardHttpConnection>();
+
   public HttpConnection newConnection(SocketChannel ch) {
     return new KeyboardHttpConnection(this, ch);
   }
@@ -44,11 +42,11 @@ public final class KeyboardHttpServer extends HttpServer {
     super(ch);
     this.service = service;
   }
-  
+
   public String getPage() {
     return service.htmlpage.replace("12345", Integer.toString(seqNum + 1));
   }
-  
+
   public String processKeyRequest(String req) {
     boolean success = true;
     boolean event = false;
@@ -62,7 +60,7 @@ public final class KeyboardHttpServer extends HttpServer {
     int numKeys = Math.min(numKeysAvailable, numKeysRequired);
 
     for (int i = numKeys; i >= 1; i--) {
-//      Debug.d("Event: " + ev[i]);
+      // Debug.d("Event: " + ev[i]);
       char mode = ev[i].charAt(0);
       int code = Integer.parseInt(ev[i].substring(1));
       if (mode == 'C') {
@@ -84,7 +82,7 @@ public final class KeyboardHttpServer extends HttpServer {
       return "problem";
     }
   }
-  
+
   // used by network thread
   abstract class KeyboardAction extends Action {
     @Override
@@ -99,14 +97,16 @@ public final class KeyboardHttpServer extends HttpServer {
       }
       return null;
     }
-    abstract Object runAction(RemoteKeyListener listener) throws RemoteException;
+
+    abstract Object runAction(RemoteKeyListener listener)
+        throws RemoteException;
   };
-  
+
   // executed by network thread
   boolean sendKey(final int code0, final boolean pressed) {
     final int code = convertKey(code0);
-//    Log.d("wifikeyboard", "in: " + code0 + " out:" + code);
-    
+    // Log.d("wifikeyboard", "in: " + code0 + " out:" + code);
+
     Object success = runAction(new KeyboardAction() {
       @Override
       Object runAction(RemoteKeyListener listener) throws RemoteException {
@@ -116,23 +116,24 @@ public final class KeyboardHttpServer extends HttpServer {
     });
     return success != null;
   }
-    
+
   // executed by network thread
   boolean sendChar(final int code) {
     Object success = runAction(new KeyboardAction() {
       @Override
-      public Object runAction(RemoteKeyListener listener) throws RemoteException {
+      public Object runAction(RemoteKeyListener listener)
+          throws RemoteException {
         listener.charEvent(code);
         return service; // not null
       }
     });
     return success != null;
   }
-  
+
   public HttpService getService() {
     return service;
   }
-  
+
   // executed by network thread
   public void addWaitingConnection(
       final KeyboardHttpConnection keyboardHttpConnection) {
@@ -143,10 +144,10 @@ public final class KeyboardHttpServer extends HttpServer {
         Log.d("wifikeyboard", "add waiting connection");
         return null;
       }
-      
+
     });
   }
-  
+
   public void onExit() {
     runAction(new Action() {
       @Override
@@ -156,14 +157,14 @@ public final class KeyboardHttpServer extends HttpServer {
       }
     });
   }
-  
+
   // executed by main thread
   public void notifyClient(final String text) {
     postUpdate(new Update() {
       @Override
       public void run() {
         for (KeyboardHttpConnection con : waitingConnections) {
-          //            Debug.d(event);
+          // Debug.d(event);
           byte[] content = text.getBytes();
           ByteBuffer out = con.sendData("text/plain", content, content.length);
           setResponse(con, out);
@@ -178,13 +179,13 @@ public final class KeyboardHttpServer extends HttpServer {
     Object result = runAction(new KeyboardAction() {
       @Override
       Object runAction(RemoteKeyListener listener) throws RemoteException {
-        
+
         return listener.setText(string) ? service : null;
       }
     });
     return result != null;
   }
-  
+
   public Object getText() {
     return runAction(new KeyboardAction() {
       @Override

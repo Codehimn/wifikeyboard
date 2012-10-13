@@ -37,22 +37,38 @@ public final class KeycodeConvertor {
     }
 
     switch (code) {
-      case 9: return KeyEvent.KEYCODE_TAB;
-      case 32: return KeyEvent.KEYCODE_SPACE;
-      case 188: return KeyEvent.KEYCODE_COMMA;
-      case 190: return KeyEvent.KEYCODE_PERIOD;
-      case 13: return KeyEvent.KEYCODE_ENTER;
-      case 219: return KeyEvent.KEYCODE_LEFT_BRACKET;
-      case 221: return KeyEvent.KEYCODE_RIGHT_BRACKET;
-      case 220: return KeyEvent.KEYCODE_BACKSLASH;
-      case 186: return KeyEvent.KEYCODE_SEMICOLON;
-      case 222: return KeyEvent.KEYCODE_APOSTROPHE;
-      case 8: return KeyEvent.KEYCODE_DEL;
-      case 189: return KeyEvent.KEYCODE_MINUS;
-      case 187: return KeyEvent.KEYCODE_EQUALS;
-      case 191: return KeyEvent.KEYCODE_SLASH;
-      case 18: return KeyEvent.KEYCODE_ALT_LEFT;
-      case 16: return KeyEvent.KEYCODE_SHIFT_LEFT;
+    case 9:
+      return KeyEvent.KEYCODE_TAB;
+    case 32:
+      return KeyEvent.KEYCODE_SPACE;
+    case 188:
+      return KeyEvent.KEYCODE_COMMA;
+    case 190:
+      return KeyEvent.KEYCODE_PERIOD;
+    case 13:
+      return KeyEvent.KEYCODE_ENTER;
+    case 219:
+      return KeyEvent.KEYCODE_LEFT_BRACKET;
+    case 221:
+      return KeyEvent.KEYCODE_RIGHT_BRACKET;
+    case 220:
+      return KeyEvent.KEYCODE_BACKSLASH;
+    case 186:
+      return KeyEvent.KEYCODE_SEMICOLON;
+    case 222:
+      return KeyEvent.KEYCODE_APOSTROPHE;
+    case 8:
+      return KeyEvent.KEYCODE_DEL;
+    case 189:
+      return KeyEvent.KEYCODE_MINUS;
+    case 187:
+      return KeyEvent.KEYCODE_EQUALS;
+    case 191:
+      return KeyEvent.KEYCODE_SLASH;
+    case 18:
+      return KeyEvent.KEYCODE_ALT_LEFT;
+    case 16:
+      return KeyEvent.KEYCODE_SHIFT_LEFT;
 
       // public static final int KEYCODE_DPAD_UP = 19;
       // public static final int KEYCODE_DPAD_DOWN = 20;
@@ -60,35 +76,52 @@ public final class KeycodeConvertor {
       // public static final int KEYCODE_DPAD_RIGHT = 22;
       // public static final int KEYCODE_DPAD_CENTER = 23;
       // arrow keys
-      case 38: return KeyEvent.KEYCODE_DPAD_UP;
-      case 40: return KeyEvent.KEYCODE_DPAD_DOWN;
-      case 37: return KeyEvent.KEYCODE_DPAD_LEFT;
-      case 39: return KeyEvent.KEYCODE_DPAD_RIGHT;
+    case 38:
+      return KeyEvent.KEYCODE_DPAD_UP;
+    case 40:
+      return KeyEvent.KEYCODE_DPAD_DOWN;
+    case 37:
+      return KeyEvent.KEYCODE_DPAD_LEFT;
+    case 39:
+      return KeyEvent.KEYCODE_DPAD_RIGHT;
       // Insert
-      case 112: return KeyEvent.KEYCODE_DPAD_CENTER;
-      case 45: return KeyEvent.KEYCODE_DPAD_CENTER;
-      
-      
+    case 112:
+      return KeyEvent.KEYCODE_DPAD_CENTER;
+    case 45:
+      return KeyEvent.KEYCODE_DPAD_CENTER;
+
       // ESC
-      case 27: return KeyEvent.KEYCODE_BACK;
-      case 116: return KeyEvent.KEYCODE_BACK;
+    case 27:
+      return KeyEvent.KEYCODE_BACK;
+    case 116:
+      return KeyEvent.KEYCODE_BACK;
       // Home
-      case 113: return KeyEvent.KEYCODE_MENU;
-      
-      case 114: return KeyEvent.KEYCODE_SEARCH;
+    case 113:
+      return KeyEvent.KEYCODE_MENU;
+
+    case 114:
+      return KeyEvent.KEYCODE_SEARCH;
       // case x: return KeyEvent.KEYCODE_CALL;
       // case x: return KeyEvent.KEYCODE_ENDCALL;
-      
-      // F9, F10
-      case 121: return KeyEvent.KEYCODE_VOLUME_UP;
-      case 120: return KeyEvent.KEYCODE_VOLUME_DOWN;
-      case KeyboardHttpServer.FOCUS: return KeyboardHttpServer.FOCUS;
-      case 36: return WiFiInputMethod.KEY_HOME;
-      case 35: return WiFiInputMethod.KEY_END;
-      case 17: return WiFiInputMethod.KEY_CONTROL;
-      case 46: return WiFiInputMethod.KEY_DEL;
 
-      default: return -1;
+      // F9, F10
+    case 121:
+      return KeyEvent.KEYCODE_VOLUME_UP;
+    case 120:
+      return KeyEvent.KEYCODE_VOLUME_DOWN;
+    case KeyboardHttpServer.FOCUS:
+      return KeyboardHttpServer.FOCUS;
+    case 36:
+      return WiFiInputMethod.KEY_HOME;
+    case 35:
+      return WiFiInputMethod.KEY_END;
+    case 17:
+      return WiFiInputMethod.KEY_CONTROL;
+    case 46:
+      return WiFiInputMethod.KEY_DEL;
+
+    default:
+      return -1;
     }
 
     // case x: return KeyEvent.KEYCODE_SOFT_LEFT;

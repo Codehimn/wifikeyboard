@@ -56,25 +56,26 @@ public class HttpService extends Service {
     }
   };
 
-  
   public HttpService() {
-    mWifiStateFilter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+    mWifiStateFilter = new IntentFilter(
+        WifiManager.NETWORK_STATE_CHANGED_ACTION);
     mWifiStateFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
     mWifiStateFilter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
   }
 
   final IBinder mBinder = new RemoteKeyboard.Stub() {
-    //@Override
+    // @Override
     public void registerKeyListener(final RemoteKeyListener listener)
         throws RemoteException {
       HttpService.this.listener = listener;
     }
-    //@Override
+
+    // @Override
     public void unregisterKeyListener(final RemoteKeyListener listener)
         throws RemoteException {
       if (HttpService.this.listener == listener) {
         HttpService.this.listener = null;
-//        Debug.d("Removed listener");
+        // Debug.d("Removed listener");
       }
     }
 
@@ -84,13 +85,14 @@ public class HttpService extends Service {
       if (server != null)
         server.notifyClient(content);
     }
-    
+
     @Override
     public void stopTextEdit() throws RemoteException {
       // FIXME: add args
       if (server != null)
         server.notifyClient(null);
     }
+
     @Override
     public void setPortUpdateListener(PortUpdateListener listener)
         throws RemoteException {
@@ -98,10 +100,10 @@ public class HttpService extends Service {
       if (port != 0) {
         portUpdateListener.portUpdated(port);
       }
-      
+
     }
   };
-  
+
   private void updateNotification(boolean ticker) {
     long when = System.currentTimeMillis();
     ArrayList<String> addrs = WiFiKeyboard.getNetworkAddresses();
@@ -115,32 +117,35 @@ public class HttpService extends Service {
       addr = "Port: " + port;
     }
     String tickerText = addr + " - WiFiKeyboard";
-    Notification notification = new Notification(R.drawable.icon, ticker ? tickerText : null, when);
-    
+    Notification notification = new Notification(R.drawable.icon,
+        ticker ? tickerText : null, when);
+
     Context context = getApplicationContext();
     CharSequence contentTitle = "WiFi Keyboard";
     CharSequence contentText = addr;
     Intent notificationIntent = new Intent(this, WiFiKeyboard.class);
-    PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-    notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-//    startForeground(0, notification);
-//    setForeground(true);
-    NotificationManager mgr =
-      (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+        notificationIntent, 0);
+    notification.setLatestEventInfo(context, contentTitle, contentText,
+        contentIntent);
+    // startForeground(0, notification);
+    // setForeground(true);
+    NotificationManager mgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     mgr.notify(0, notification);
   }
-  
+
   private final BroadcastReceiver mWifiStateReceiver = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
       updateNotification(false);
     }
   };
-  
+
   private static ServerSocketChannel makeSocket(Context context) {
     ServerSocketChannel ch;
-    
-    SharedPreferences prefs = context.getSharedPreferences("port", MODE_PRIVATE);
+
+    SharedPreferences prefs = context
+        .getSharedPreferences("port", MODE_PRIVATE);
     int savedPort = prefs.getInt("port", 7777);
 
     try {
@@ -148,24 +153,27 @@ public class HttpService extends Service {
       ch.socket().setReuseAddress(true);
       ch.socket().bind(new java.net.InetSocketAddress(savedPort));
       return ch;
-    } catch (IOException e) {}
-    
+    } catch (IOException e) {
+    }
+
     if (savedPort != 7777) {
       try {
         ch = ServerSocketChannel.open();
         ch.socket().setReuseAddress(true);
         ch.socket().bind(new java.net.InetSocketAddress(7777));
         return ch;
-      } catch (IOException e) {}
+      } catch (IOException e) {
+      }
     }
-    
+
     for (int i = 1; i < 9; i++) {
       try {
         ch = ServerSocketChannel.open();
         ch.socket().setReuseAddress(true);
         ch.socket().bind(new java.net.InetSocketAddress(i * 1111));
         return ch;
-      } catch (IOException e) {}
+      } catch (IOException e) {
+      }
     }
     for (int i = 2; i < 64; i++) {
       try {
@@ -173,7 +181,8 @@ public class HttpService extends Service {
         ch.socket().setReuseAddress(true);
         ch.socket().bind(new java.net.InetSocketAddress(i * 1000));
         return ch;
-      } catch (IOException e) {}
+      } catch (IOException e) {
+      }
     }
     try {
       ch = ServerSocketChannel.open();
@@ -184,13 +193,14 @@ public class HttpService extends Service {
       throw new RuntimeException(t);
     }
   }
-  
+
   @Override
   public void onCreate() {
     Log.d("wifikeyboard", "onCreate()");
     super.onCreate();
-    if (isRunning) return;
-    
+    if (isRunning)
+      return;
+
     registerReceiver(mWifiStateReceiver, mWifiStateFilter);
     TelephonyManager t = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
     t.listen(dataListener, PhoneStateListener.LISTEN_DATA_CONNECTION_STATE);
@@ -199,14 +209,16 @@ public class HttpService extends Service {
     int pagesize = 32768;
     byte[] data = new byte[pagesize];
     StringBuilder page;
-    
+
     try {
       int offset = 0;
       while (true) {
         int r = is.read(data, offset, pagesize - offset);
-        if (r < 0) break;
+        if (r < 0)
+          break;
         offset += r;
-        if (offset >= pagesize) throw new IOException("page is too large to load");
+        if (offset >= pagesize)
+          throw new IOException("page is too large to load");
       }
       page = new StringBuilder();
       page.append(new String(data, 0, offset));
@@ -215,25 +227,26 @@ public class HttpService extends Service {
     }
     while (true) {
       int pos = page.indexOf("$");
-      if (pos == -1) break;
+      if (pos == -1)
+        break;
       int res = Integer.parseInt(page.substring(pos + 1, pos + 9), 16);
       page.replace(pos, pos + 9, getString(res));
     }
     htmlpage = page.toString();
     startServer(this);
   }
-  
+
   private static void removeNotification(Context context) {
-    NotificationManager mgr =
-      (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+    NotificationManager mgr = (NotificationManager) context
+        .getSystemService(NOTIFICATION_SERVICE);
     mgr.cancelAll();
   }
-  
+
   @Override
   public void onDestroy() {
     isRunning = false;
     onServerFinish = null;
-//    stopForeground(true);
+    // stopForeground(true);
     Log.d("wifikeyboard", "onDestroy()");
     server.finish();
     unregisterReceiver(mWifiStateReceiver);
@@ -249,7 +262,7 @@ public class HttpService extends Service {
   }
 
   private static Runnable onServerFinish = null;
-  
+
   public static void doStartServer(HttpService context) {
     ServerSocketChannel socket = makeSocket(context);
     context.port = socket.socket().getLocalPort();
@@ -267,7 +280,7 @@ public class HttpService extends Service {
     context.updateNotification(true);
     server.start();
   }
-  
+
   public static void startServer(final HttpService context) {
     if (server == null) {
       doStartServer(context);
@@ -280,7 +293,7 @@ public class HttpService extends Service {
       };
     }
   }
-  
+
   public void networkServerFinished() {
     server = null;
     if (onServerFinish != null) {

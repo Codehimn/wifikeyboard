@@ -1,0 +1,11 @@
+*.swp
+gen/
+bin/
+.externalToolBuilders/
+.classpath
+.project
+.settings/
+default.properties
+project.properties
+res/raw/key.html
+.gitignore

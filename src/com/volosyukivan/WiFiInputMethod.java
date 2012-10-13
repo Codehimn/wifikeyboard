@@ -20,13 +20,10 @@ package com.volosyukivan;
 
 import java.util.HashSet;
 
-import org.apache.http.impl.client.DefaultProxyAuthenticationHandler;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.inputmethodservice.ExtractEditText;
 import android.inputmethodservice.InputMethodService;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -46,8 +43,6 @@ public class WiFiInputMethod extends InputMethodService {
   public static final int KEY_CONTROL = -1002;
   public static final int KEY_DEL = -1003;
 
-  
-  
   @Override
   public void onStartInput(EditorInfo attribute, boolean restarting) {
     super.onStartInput(attribute, restarting);
@@ -67,12 +62,12 @@ public class WiFiInputMethod extends InputMethodService {
 
   @Override
   public void onDestroy() {
-//    Debug.d("WiFiInputMethod onDestroy()");
+    // Debug.d("WiFiInputMethod onDestroy()");
     try {
       if (remoteKeyboard != null)
         remoteKeyboard.unregisterKeyListener(keyboardListener);
     } catch (RemoteException e) {
-//      Debug.d("Failed to unregister listener");
+      // Debug.d("Failed to unregister listener");
     }
     remoteKeyboard = null;
     if (serviceConnection != null)
@@ -83,88 +78,106 @@ public class WiFiInputMethod extends InputMethodService {
 
   PowerManager.WakeLock wakeLock;
   HashSet<Integer> pressedKeys = new HashSet<Integer>();
-  
+
   @Override
   public void onCreate() {
     super.onCreate();
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-    wakeLock = pm.newWakeLock(
-        PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "wifikeyboard");
-//    Debug.d("WiFiInputMethod started");
+    wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+        | PowerManager.ON_AFTER_RELEASE, "wifikeyboard");
+    // Debug.d("WiFiInputMethod started");
     serviceConnection = new ServiceConnection() {
-      //@Override
+      // @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
-//        Debug.d("WiFiInputMethod connected to HttpService.");
+        // Debug.d("WiFiInputMethod connected to HttpService.");
         try {
           remoteKeyboard = RemoteKeyboard.Stub.asInterface(service);
           keyboardListener = new RemoteKeyListener.Stub() {
             @Override
-            public void keyEvent(int code, boolean pressed) throws RemoteException {
+            public void keyEvent(int code, boolean pressed)
+                throws RemoteException {
               // Debug.d("got key in WiFiInputMethod");
               receivedKey(code, pressed);
             }
+
             @Override
             public void charEvent(int code) throws RemoteException {
               // Debug.d("got key in WiFiInputMethod");
               receivedChar(code);
             }
+
             @Override
             public boolean setText(String text) throws RemoteException {
               return WiFiInputMethod.this.setText(text);
             }
+
             @Override
             public String getText() throws RemoteException {
               return WiFiInputMethod.this.getText();
             }
           };
-          RemoteKeyboard.Stub.asInterface(service).registerKeyListener(keyboardListener);
+          RemoteKeyboard.Stub.asInterface(service).registerKeyListener(
+              keyboardListener);
         } catch (RemoteException e) {
           throw new RuntimeException(
               "WiFiInputMethod failed to connected to HttpService.", e);
         }
       }
-      //@Override
+
+      // @Override
       public void onServiceDisconnected(ComponentName name) {
-//        Debug.d("WiFiInputMethod disconnected from HttpService.");
+        // Debug.d("WiFiInputMethod disconnected from HttpService.");
       }
-    }; 
+    };
     if (this.bindService(new Intent(this, HttpService.class),
         serviceConnection, BIND_AUTO_CREATE) == false) {
       throw new RuntimeException("failed to connect to HttpService");
     }
   }
-  
+
   void receivedChar(int code) {
     wakeLock.acquire();
     wakeLock.release();
     InputConnection conn = getCurrentInputConnection();
     if (conn == null) {
-//      Debug.d("connection closed");
+      // Debug.d("connection closed");
       return;
     }
-    
+
     if (pressedKeys.contains(KEY_CONTROL)) {
       switch (code) {
-      case 'a':case 'A': selectAll(conn); return;
-      case 'x':case 'X': cut(conn); return;
-      case 'c':case 'C': copy(conn); return;
-      case 'v':case 'V': paste(conn); return;
+      case 'a':
+      case 'A':
+        selectAll(conn);
+        return;
+      case 'x':
+      case 'X':
+        cut(conn);
+        return;
+      case 'c':
+      case 'C':
+        copy(conn);
+        return;
+      case 'v':
+      case 'V':
+        paste(conn);
+        return;
       }
     }
 
-    String text = null; 
+    String text = null;
     if (code >= 0 && code <= 65535) {
-      text = new String(new char[] { (char) code } );
+      text = new String(new char[] { (char) code });
     } else {
       int HI_SURROGATE_START = 0xD800;
       int LO_SURROGATE_START = 0xDC00;
       int hi = ((code >> 10) & 0x3FF) - 0x040 | HI_SURROGATE_START;
       int lo = LO_SURROGATE_START | (code & 0x3FF);
-      text = new String(new char[] { (char) hi, (char) lo } );
+      text = new String(new char[] { (char) hi, (char) lo });
     }
     conn.commitText(text, 1);
   }
-  
+
   void receivedKey(int code, boolean pressed) {
     if (code == KeyboardHttpServer.FOCUS) {
       for (int key : pressedKeys) {
@@ -175,13 +188,15 @@ public class WiFiInputMethod extends InputMethodService {
       return;
     }
     if (pressedKeys.contains(code) == pressed) {
-      if (pressed == false) return;
+      if (pressed == false)
+        return;
       // ignore autorepeat on following keys
       switch (code) {
       case KeyEvent.KEYCODE_ALT_LEFT:
       case KeyEvent.KEYCODE_SHIFT_LEFT:
       case KeyEvent.KEYCODE_HOME:
-      case KeyEvent.KEYCODE_MENU: return;
+      case KeyEvent.KEYCODE_MENU:
+        return;
       }
     }
     if (pressed) {
@@ -192,18 +207,18 @@ public class WiFiInputMethod extends InputMethodService {
       sendKey(code, pressed, pressedKeys.isEmpty());
     }
   }
-  
+
   void resetModifiers() {
     InputConnection conn = getCurrentInputConnection();
     if (conn == null) {
       return;
     }
-    conn.clearMetaKeyStates(
-        KeyEvent.META_ALT_ON | KeyEvent.META_SHIFT_ON | KeyEvent.META_SYM_ON);
+    conn.clearMetaKeyStates(KeyEvent.META_ALT_ON | KeyEvent.META_SHIFT_ON
+        | KeyEvent.META_SYM_ON);
   }
-  
+
   private long lastWake;
-  
+
   void sendKey(int code, boolean down, boolean resetModifiers) {
     long time = System.currentTimeMillis();
     if (time - lastWake > 5000) {
@@ -213,60 +228,71 @@ public class WiFiInputMethod extends InputMethodService {
     }
     InputConnection conn = getCurrentInputConnection();
     if (conn == null) {
-//      Debug.d("connection closed");
+      // Debug.d("connection closed");
       return;
     }
     if (code < 0) {
-      if (down == false) return;
+      if (down == false)
+        return;
       switch (code) {
-      case KEY_HOME: keyHome(conn); break;
-      case KEY_END: keyEnd(conn); break;
-      case KEY_DEL: keyDel(conn); break;
+      case KEY_HOME:
+        keyHome(conn);
+        break;
+      case KEY_END:
+        keyEnd(conn);
+        break;
+      case KEY_DEL:
+        keyDel(conn);
+        break;
       }
       return;
     }
-    
+
     if (code == KeyEvent.KEYCODE_DPAD_LEFT && pressedKeys.contains(KEY_CONTROL)) {
-      if (down == false) return;
+      if (down == false)
+        return;
       wordLeft(conn);
       return;
-    } else if (code == KeyEvent.KEYCODE_DPAD_RIGHT && pressedKeys.contains(KEY_CONTROL)) {
-      if (down == false) return;
+    } else if (code == KeyEvent.KEYCODE_DPAD_RIGHT
+        && pressedKeys.contains(KEY_CONTROL)) {
+      if (down == false)
+        return;
       wordRight(conn);
       return;
     } else if (code == KeyEvent.KEYCODE_DPAD_CENTER) {
       if (pressedKeys.contains(KEY_CONTROL)) {
-        if (!down) return;
+        if (!down)
+          return;
         copy(conn);
         return;
       }
       if (pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT)) {
-        if (!down) return;
+        if (!down)
+          return;
         paste(conn);
         return;
       }
     }
-    
-//    if (pressedKeys.contains(KEY_CONTROL)) {
-//      if (down == false) return;
-//      switch (code) {
-//      case KeyEvent.KEYCODE_A: selectAll(conn); break;
-//      case KeyEvent.KEYCODE_X: cut(conn); break;
-//      case KeyEvent.KEYCODE_C: copy(conn); break;
-//      case KeyEvent.KEYCODE_V: paste(conn); break;
-//      }
-//      return;
-//    }
-    
-    
-    conn.sendKeyEvent(new KeyEvent(
-        down ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP, code));
+
+    // if (pressedKeys.contains(KEY_CONTROL)) {
+    // if (down == false) return;
+    // switch (code) {
+    // case KeyEvent.KEYCODE_A: selectAll(conn); break;
+    // case KeyEvent.KEYCODE_X: cut(conn); break;
+    // case KeyEvent.KEYCODE_C: copy(conn); break;
+    // case KeyEvent.KEYCODE_V: paste(conn); break;
+    // }
+    // return;
+    // }
+
+    conn.sendKeyEvent(new KeyEvent(down ? KeyEvent.ACTION_DOWN
+        : KeyEvent.ACTION_UP, code));
     if (resetModifiers) {
-      conn.clearMetaKeyStates(
-          KeyEvent.META_ALT_ON | KeyEvent.META_SHIFT_ON | KeyEvent.META_SYM_ON);
+      conn.clearMetaKeyStates(KeyEvent.META_ALT_ON | KeyEvent.META_SHIFT_ON
+          | KeyEvent.META_SYM_ON);
     }
   }
-  
+
   private void keyDel(InputConnection conn) {
     if (pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT)) {
       cut(conn);
@@ -296,47 +322,53 @@ public class WiFiInputMethod extends InputMethodService {
       // Potentially, text or text.text can be null
     }
   }
-  
+
   ExtractedTextRequest req = new ExtractedTextRequest();
   {
     req.hintMaxChars = 100000;
     req.hintMaxLines = 10000;
   }
-  
+
   private void wordRight(InputConnection conn) {
     boolean shift = pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT);
     ExtractedText text = conn.getExtractedText(req, 0);
-    if (text == null) return;
-    
+    if (text == null)
+      return;
+
     int end = text.selectionEnd;
     String str = text.text.toString();
     int len = str.length();
-    
+
     for (; end < len; end++) {
-      if (!Character.isSpace(str.charAt(end))) break;
+      if (!Character.isSpace(str.charAt(end)))
+        break;
     }
     for (; end < len; end++) {
-      if (Character.isSpace(str.charAt(end))) break;
+      if (Character.isSpace(str.charAt(end)))
+        break;
     }
     int start = shift ? text.selectionStart : end;
     Log.d("wifikeyboard", "start = " + start + " end = " + end);
     conn.setSelection(start, end);
   }
-  
+
   private void wordLeft(InputConnection conn) {
     boolean shift = pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT);
     ExtractedText text = conn.getExtractedText(req, 0);
-    if (text == null) return;
-    
+    if (text == null)
+      return;
+
     int end = text.selectionEnd - 1;
-    
+
     String str = text.text.toString();
-    
+
     for (; end >= 0; end--) {
-      if (!Character.isSpace(str.charAt(end))) break;
+      if (!Character.isSpace(str.charAt(end)))
+        break;
     }
     for (; end >= 0; end--) {
-      if (Character.isSpace(str.charAt(end))) break;
+      if (Character.isSpace(str.charAt(end)))
+        break;
     }
     end++;
     int start = shift ? text.selectionStart : end;
@@ -348,13 +380,15 @@ public class WiFiInputMethod extends InputMethodService {
     boolean control = pressedKeys.contains(KEY_CONTROL);
     boolean shift = pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT);
     ExtractedText text = conn.getExtractedText(req, 0);
-    if (text == null) return;
+    if (text == null)
+      return;
     int end;
     if (control) {
       end = text.text.length();
     } else {
       end = text.text.toString().indexOf('\n', text.selectionEnd);
-      if (end == -1) end = text.text.length(); 
+      if (end == -1)
+        end = text.text.length();
     }
     int start = shift ? text.selectionStart : end;
     Log.d("wifikeyboard", "start = " + start + " end = " + end);
@@ -365,8 +399,9 @@ public class WiFiInputMethod extends InputMethodService {
     boolean control = pressedKeys.contains(KEY_CONTROL);
     boolean shift = pressedKeys.contains(KeyEvent.KEYCODE_SHIFT_LEFT);
     ExtractedText text = conn.getExtractedText(req, 0);
-    if (text == null) return;
-    
+    if (text == null)
+      return;
+
     int end;
     if (control) {
       end = 0;
@@ -376,14 +411,14 @@ public class WiFiInputMethod extends InputMethodService {
     }
     int start = shift ? text.selectionStart : end;
     Log.d("wifikeyboard", "start = " + start + " end = " + end);
-   conn.setSelection(start, end);
+    conn.setSelection(start, end);
   }
 
   boolean setText(String text) {
     // FIXME: need feedback if the input was lost
     InputConnection conn = getCurrentInputConnection();
     if (conn == null) {
-//      Debug.d("connection closed");
+      // Debug.d("connection closed");
       return false;
     }
     conn.beginBatchEdit();
@@ -393,7 +428,7 @@ public class WiFiInputMethod extends InputMethodService {
     conn.endBatchEdit();
     return true;
   }
-  
+
   String getText() {
     String text = "";
     try {
